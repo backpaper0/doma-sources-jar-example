@@ -1,0 +1,64 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+group = 'com.example'
+version = '1.0.0-SNAPSHOT'
+
+tasks.withType(JavaCompile) {
+    sourceCompatibility = '11'
+    targetCompatibility = '11'
+    options.encoding = 'UTF-8'
+}
+
+//cf. https://doma.readthedocs.io/ja/stable/build/#gradle
+// JavaクラスとSQLファイルの出力先ディレクトリを同じにする
+processResources.destinationDir = compileJava.destinationDir
+// コンパイルより前にSQLファイルを出力先ディレクトリにコピーするために依存関係を逆転する
+compileJava.dependsOn processResources
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    annotationProcessor "org.seasar.doma:doma:${domaVersion}"
+    implementation "org.seasar.doma:doma:${domaVersion}"
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allJava, sourceSets.main.output.classesDirs //Domaが生成するソースはsourceSets.main.output.classesDirsに出力される
+    classifier = 'sources'
+    exclude '**/*.class' //sourceSets.main.output.classesDirsはclassファイルも含むのでフィルタリングする
+}
+
+//sourceSets.main.output.classesDirsに出力されるJavaファイルを除く
+jar.excludes = ['**/*.java']
+
+//task javadocJar(type: Jar) {
+//    from javadoc
+//    classifier = 'javadoc'
+//}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+//            artifact javadocJar
+        }
+    }
+    repositories {
+        maven {
+            def releasesRepoUrl = 'http://localhost:8081/repository/maven-releases/'
+            def snapshotsRepoUrl = 'http://localhost:8081/repository/maven-snapshots/'
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+            credentials {
+                username 'admin'
+                password 'admin123'
+            }
+        }
+    }
+}
+            

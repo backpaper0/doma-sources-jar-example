@@ -1,0 +1,10 @@
+/.*
+!/.gitignore
+!/.mvn/
+/bin/
+/build/
+/target/
+/*.log
+/*.iml
+/*.ipr
+/*.iws
